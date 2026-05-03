@@ -9,11 +9,25 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.viewmodel.BackupViewModel
+import com.example.myapplication.viewmodel.ThemeMode
+import com.example.myapplication.viewmodel.ThemeViewModel
 
 @Composable
-fun MoreScreen() {
+fun MoreScreen(
+    themeViewModel: ThemeViewModel,
+    backupViewModel: BackupViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    onNavigateToCategoryManage: () -> Unit = {}
+) {
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    val themeMode by themeViewModel.themeMode.collectAsState()
+    val backupStatus by backupViewModel.backupStatus.collectAsState()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -32,8 +46,12 @@ fun MoreScreen() {
                 SettingItem(
                     icon = Icons.Filled.Palette,
                     title = "主题",
-                    subtitle = "跟随系统",
-                    onClick = { }
+                    subtitle = when (themeMode) {
+                        ThemeMode.SYSTEM -> "跟随系统"
+                        ThemeMode.LIGHT -> "浅色"
+                        ThemeMode.DARK -> "深色"
+                    },
+                    onClick = { showThemeDialog = true }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingItem(
@@ -64,17 +82,24 @@ fun MoreScreen() {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column {
                 SettingItem(
+                    icon = Icons.Filled.Folder,
+                    title = "清单管理",
+                    subtitle = "管理任务分类",
+                    onClick = onNavigateToCategoryManage
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingItem(
                     icon = Icons.Filled.Backup,
                     title = "备份数据",
-                    subtitle = "导出任务数据",
-                    onClick = { }
+                    subtitle = backupStatus ?: "导出任务数据",
+                    onClick = { backupViewModel.backupData() }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingItem(
                     icon = Icons.Filled.Restore,
                     title = "恢复数据",
                     subtitle = "从备份导入",
-                    onClick = { }
+                    onClick = { showRestoreDialog = true }
                 )
             }
         }
@@ -128,6 +153,102 @@ fun MoreScreen() {
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
                     Text("确定")
+                }
+            }
+        )
+    }
+
+    // 主题选择对话框
+    if (showThemeDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = { Text("选择主题") },
+            text = {
+                Column {
+                    ThemeMode.entries.forEach { mode ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    themeViewModel.setThemeMode(mode)
+                                    showThemeDialog = false
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = themeMode == mode,
+                                onClick = {
+                                    themeViewModel.setThemeMode(mode)
+                                    showThemeDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = when (mode) {
+                                    ThemeMode.SYSTEM -> "跟随系统"
+                                    ThemeMode.LIGHT -> "浅色"
+                                    ThemeMode.DARK -> "深色"
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // 恢复数据对话框
+    if (showRestoreDialog) {
+        val backupFiles = remember { backupViewModel.getBackupFiles() }
+        AlertDialog(
+            onDismissRequest = { showRestoreDialog = false },
+            title = { Text("恢复数据") },
+            text = {
+                Column {
+                    if (backupFiles.isEmpty()) {
+                        Text(
+                            text = "没有找到备份文件",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    } else {
+                        Text(
+                            text = "选择要恢复的备份文件：",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        backupFiles.forEach { file ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable {
+                                        val json = backupViewModel.readBackupFile(file)
+                                        if (json != null) {
+                                            backupViewModel.restoreData(json)
+                                        }
+                                        showRestoreDialog = false
+                                    }
+                            ) {
+                                Text(
+                                    text = file.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showRestoreDialog = false }) {
+                    Text("取消")
                 }
             }
         )

@@ -10,12 +10,14 @@ import androidx.navigation.navArgument
 import com.example.myapplication.screen.*
 import com.example.myapplication.viewmodel.CategoryViewModel
 import com.example.myapplication.viewmodel.TaskViewModel
+import com.example.myapplication.viewmodel.ThemeViewModel
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
     taskViewModel: TaskViewModel = viewModel(),
-    categoryViewModel: CategoryViewModel = viewModel()
+    categoryViewModel: CategoryViewModel = viewModel(),
+    themeViewModel: ThemeViewModel = viewModel()
 ) {
     NavHost(navController = navController, startDestination = Screen.Today.route) {
         composable(Screen.Today.route) {
@@ -61,7 +63,28 @@ fun NavGraph(
             )
         }
         composable(Screen.More.route) {
-            MoreScreen()
+            MoreScreen(
+                themeViewModel = themeViewModel,
+                onNavigateToCategoryManage = {
+                    navController.navigate(Screen.CategoryManage.route)
+                }
+            )
+        }
+        composable(Screen.Search.route) {
+            SearchScreen(
+                taskViewModel = taskViewModel,
+                categoryViewModel = categoryViewModel,
+                onTaskClick = { taskId ->
+                    navController.navigate(Screen.TaskEdit.createRoute(taskId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.CategoryManage.route) {
+            CategoryManageScreen(
+                categoryViewModel = categoryViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(
             route = Screen.TaskEdit.route,

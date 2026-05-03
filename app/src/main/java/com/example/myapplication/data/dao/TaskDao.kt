@@ -53,4 +53,10 @@ interface TaskDao {
 
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteTaskById(taskId: Long)
+
+    @Query("SELECT * FROM tasks WHERE title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%' ORDER BY createdAt DESC")
+    fun searchTasks(query: String): Flow<List<Task>>
+
+    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
+    suspend fun getAllTasksOnce(): List<Task>
 }

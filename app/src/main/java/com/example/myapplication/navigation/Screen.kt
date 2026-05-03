@@ -17,4 +17,6 @@ sealed class Screen(
     object TaskEdit : Screen("task_edit/{taskId}", "编辑任务", Icons.Filled.Edit) {
         fun createRoute(taskId: Long = -1L) = "task_edit/$taskId"
     }
+    object Search : Screen("search", "搜索", Icons.Filled.Search)
+    object CategoryManage : Screen("category_manage", "清单管理", Icons.Filled.Folder)
 }

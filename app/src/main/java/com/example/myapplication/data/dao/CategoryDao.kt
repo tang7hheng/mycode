@@ -23,4 +23,7 @@ interface CategoryDao {
 
     @Delete
     suspend fun deleteCategory(category: Category)
+
+    @Query("SELECT * FROM categories ORDER BY sortOrder ASC")
+    suspend fun getAllCategoriesOnce(): List<Category>
 }

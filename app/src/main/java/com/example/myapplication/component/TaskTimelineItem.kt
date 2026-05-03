@@ -1,5 +1,7 @@
 package com.example.myapplication.component
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,10 +10,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,6 +35,16 @@ fun TaskTimelineItem(
     val isOverdue = task.dueDate != null && task.dueDate < System.currentTimeMillis() && !task.isCompleted
     val alpha = if (task.isCompleted) 0.5f else 1.0f
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+
+    // 完成动画
+    val checkboxScale by animateFloatAsState(
+        targetValue = if (task.isCompleted) 1.2f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "checkbox_scale"
+    )
 
     Row(
         modifier = modifier
@@ -109,10 +122,11 @@ fun TaskTimelineItem(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 完成复选框
+                // 完成复选框（带动画）
                 Checkbox(
                     checked = task.isCompleted,
-                    onCheckedChange = { onToggleComplete() }
+                    onCheckedChange = { onToggleComplete() },
+                    modifier = Modifier.scale(checkboxScale)
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))

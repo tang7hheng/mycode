@@ -8,11 +8,14 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.component.CategoryPicker
 import com.example.myapplication.component.DateTimePicker
+import com.example.myapplication.component.EstimatedTimePicker
 import com.example.myapplication.component.PrioritySelector
+import com.example.myapplication.component.TagPicker
 import com.example.myapplication.data.entity.Task
 import com.example.myapplication.viewmodel.CategoryViewModel
 import com.example.myapplication.viewmodel.TaskViewModel
@@ -32,6 +35,9 @@ fun TaskEditScreen(
     var dueDate by remember { mutableStateOf<Long?>(null) }
     var priority by remember { mutableIntStateOf(0) }
     var categoryId by remember { mutableStateOf<Long?>(null) }
+    var tags by remember { mutableStateOf<List<String>>(emptyList()) }
+    var estimatedMinutes by remember { mutableIntStateOf(0) }
+    var hasReminder by remember { mutableStateOf(true) }
     var isLoaded by remember { mutableStateOf(isNewTask) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -48,6 +54,8 @@ fun TaskEditScreen(
                 dueDate = task.dueDate
                 priority = task.priority
                 categoryId = task.categoryId
+                tags = if (task.tags.isNotBlank()) task.tags.split(",") else emptyList()
+                estimatedMinutes = task.estimatedMinutes
             }
             isLoaded = true
         }
@@ -133,6 +141,43 @@ fun TaskEditScreen(
                 onCategorySelected = { categoryId = it }
             )
 
+            // 标签选择
+            TagPicker(
+                selectedTags = tags,
+                onTagsChanged = { tags = it }
+            )
+
+            // 预估耗时
+            EstimatedTimePicker(
+                estimatedMinutes = estimatedMinutes,
+                onEstimatedMinutesChanged = { estimatedMinutes = it }
+            )
+
+            // 提醒设置
+            if (dueDate != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "任务提醒",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "截止时间前15分钟提醒",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                    Switch(
+                        checked = hasReminder,
+                        onCheckedChange = { hasReminder = it }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // 保存按钮
@@ -152,7 +197,9 @@ fun TaskEditScreen(
                                 description = description.trim(),
                                 dueDate = dueDate,
                                 priority = priority,
-                                categoryId = categoryId
+                                categoryId = categoryId,
+                                tags = tags.joinToString(","),
+                                estimatedMinutes = estimatedMinutes
                             )
                         )
                     } else {
@@ -164,7 +211,9 @@ fun TaskEditScreen(
                                         description = description.trim(),
                                         dueDate = dueDate,
                                         priority = priority,
-                                        categoryId = categoryId
+                                        categoryId = categoryId,
+                                        tags = tags.joinToString(","),
+                                        estimatedMinutes = estimatedMinutes
                                     )
                                 )
                             }

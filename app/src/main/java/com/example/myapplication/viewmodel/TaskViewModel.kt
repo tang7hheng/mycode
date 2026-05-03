@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.AppDatabase
 import com.example.myapplication.data.entity.Task
+import com.example.myapplication.notification.NotificationScheduler
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -12,6 +13,7 @@ import java.util.*
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val taskDao = database.taskDao()
+    private val context = application
 
     val allTasks: StateFlow<List<Task>> = taskDao.getAllTasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -80,26 +82,44 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addTask(task: Task) {
         viewModelScope.launch {
-            taskDao.insertTask(task)
+            val taskId = taskDao.insertTask(task)
+            // 设置提醒
+            NotificationScheduler.scheduleTaskReminder(context, task.copy(id = taskId))
         }
     }
 
     fun updateTask(task: Task) {
         viewModelScope.launch {
             taskDao.updateTask(task)
+            // 更新提醒
+            NotificationScheduler.cancelTaskReminder(context, task.id)
+            NotificationScheduler.scheduleTaskReminder(context, task)
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             taskDao.deleteTask(task)
+            // 取消提醒
+            NotificationScheduler.cancelTaskReminder(context, task.id)
         }
     }
 
     fun deleteTaskById(taskId: Long) {
         viewModelScope.launch {
             taskDao.deleteTaskById(taskId)
+            // 取消提醒
+            NotificationScheduler.cancelTaskReminder(context, taskId)
         }
+    }
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    fun searchTasks(query: String): StateFlow<List<Task>> {
+        _searchQuery.value = query
+        return taskDao.searchTasks(query)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
 
     fun toggleComplete(task: Task) {

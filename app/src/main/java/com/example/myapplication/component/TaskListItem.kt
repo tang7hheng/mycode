@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ fun TaskListItem(
     val isOverdue = task.dueDate != null && task.dueDate < System.currentTimeMillis() && !task.isCompleted
     val alpha = if (task.isCompleted) 0.5f else 1.0f
     val dateFormat = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
+    val tags = if (task.tags.isNotBlank()) task.tags.split(",") else emptyList()
 
     Card(
         modifier = modifier
@@ -101,6 +103,29 @@ fun TaskListItem(
                         }
                     }
 
+                    // 预估耗时
+                    if (task.estimatedMinutes > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Timer,
+                                contentDescription = null,
+                                modifier = Modifier.size(12.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                text = if (task.estimatedMinutes >= 60)
+                                    "${task.estimatedMinutes / 60}小时"
+                                else
+                                    "${task.estimatedMinutes}分钟",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+
                     // 分类
                     if (categoryName != null && categoryColor != null) {
                         Row(
@@ -130,6 +155,29 @@ fun TaskListItem(
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.error
                         )
+                    }
+                }
+
+                // 标签
+                if (tags.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        tags.take(3).forEach { tag ->
+                            SuggestionChip(
+                                onClick = { },
+                                label = { Text(tag, fontSize = 10.sp) },
+                                modifier = Modifier.height(24.dp)
+                            )
+                        }
+                        if (tags.size > 3) {
+                            Text(
+                                text = "+${tags.size - 3}",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             }

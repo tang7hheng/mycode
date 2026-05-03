@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,14 +20,17 @@ import com.example.myapplication.navigation.Screen
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.viewmodel.CategoryViewModel
 import com.example.myapplication.viewmodel.TaskViewModel
+import com.example.myapplication.viewmodel.ThemeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
-                MainScreen()
+            val themeViewModel: ThemeViewModel = viewModel()
+            val themeMode by themeViewModel.themeMode.collectAsState()
+            MyApplicationTheme(themeMode = themeMode) {
+                MainScreen(themeViewModel = themeViewModel)
             }
         }
     }
@@ -34,7 +38,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(themeViewModel: ThemeViewModel) {
     val navController = rememberNavController()
     val taskViewModel: TaskViewModel = viewModel()
     val categoryViewModel: CategoryViewModel = viewModel()
@@ -61,7 +65,17 @@ fun MainScreen() {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                ),
+                actions = {
+                    IconButton(onClick = {
+                        navController.navigate(Screen.Search.route)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "搜索"
+                        )
+                    }
+                }
             )
         },
         bottomBar = {
@@ -83,7 +97,8 @@ fun MainScreen() {
             NavGraph(
                 navController = navController,
                 taskViewModel = taskViewModel,
-                categoryViewModel = categoryViewModel
+                categoryViewModel = categoryViewModel,
+                themeViewModel = themeViewModel
             )
         }
     }

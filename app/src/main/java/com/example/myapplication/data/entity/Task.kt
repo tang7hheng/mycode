@@ -12,6 +12,8 @@ data class Task(
     val dueDate: Long? = null,
     val priority: Int = 0,
     val categoryId: Long? = null,
+    val tags: String = "", // 逗号分隔的标签
+    val estimatedMinutes: Int = 0, // 预估耗时（分钟）
     val isCompleted: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null
